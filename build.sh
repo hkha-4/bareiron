@@ -1,31 +1,21 @@
 #!/usr/bin/env bash
 
-# Check for registries before attempting to compile, prevents confusion
 if [ ! -f "include/registries.h" ]; then
   echo "Error: 'include/registries.h' is missing."
   echo "Please follow the 'Compilation' section of the README to generate it."
   exit 1
 fi
 
-# Figure out executable suffix (for MSYS compilation)
 case "$OSTYPE" in
   msys*|cygwin*|win32*) exe=".exe" ;;
   *) exe="" ;;
 esac
-
-# mingw64-specific linker options
 windows_linker=""
 unameOut="$(uname -s)"
 case "$unameOut" in
-  MINGW64_NT*)
-    windows_linker="-static -lws2_32 -pthread"
-    ;;
+  MINGW64_NT*) windows_linker="-static -lws2_32 -pthread" ;;
 esac
-
-# Default compiler
 compiler="gcc"
-
-# Handle arguments for windows 9x build
 for arg in "$@"; do
   case $arg in
     --9x)
@@ -41,5 +31,6 @@ for arg in "$@"; do
 done
 
 rm -f "bareiron$exe"
-$compiler src/*.c -O2 -Iinclude -o "bareiron$exe" $windows_linker
+$compiler src/*.c -O2 -Iinclude -o "bareiron$exe" $windows_linker \
+  -Wl,--wrap=cs_loginStart -Wl,--wrap=handlePacket
 "./bareiron$exe"
